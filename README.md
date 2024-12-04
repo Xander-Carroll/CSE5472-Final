@@ -25,7 +25,7 @@ This script takes two optional command line arguments:
 ```
 #   scan.py [network] [wordlist]
 #       network  - the network submask to scan for vulnerable IOT devices [default=192.168.0.0/24].
-#       wordlist - a wordlist file to be used for brute force attacks [default=wordlists/rockyou.txt].
+#       wordlist - a wordlist file to be used for brute force attacks [default=wordlists/example-list.txt].
 ```
 
 ## Wordlists
