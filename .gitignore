@@ -1,4 +1,6 @@
-wordlists
-env
+wordlists/
+env/
 ip_list.txt
 ips.txt
+hydra.restore
+output.txt

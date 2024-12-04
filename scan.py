@@ -4,6 +4,14 @@
 #       network  - the network submask to scan for vulnerable IOT devices [default=192.168.0.0/24].
 #       wordlist - a wordlist file to be used for brute force attacks [default=wordlists/example-list.txt].
 
+# The script does the following:
+#   1) Scans the network for devices.
+#   2) Finds the open ports of the devices that it found.
+#   3) Tries to exploit the open ports. If any of the following services are found, an attack will be attempted:
+#       - RTSP
+#       - FTP
+#       - SSH
+#   4) Prints the results in a readable, nmap style, table.
 
 # Python Built-In Modules.
 import os.path
