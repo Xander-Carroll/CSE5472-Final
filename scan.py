@@ -44,7 +44,7 @@ def main():
     print(f"Starting scan at {time_stamp}")
     print(f"scan report for {options['network']}")
 
-    # Find all the devices with open ports on the network
+    # Find all the devices with open ports on the network.
     open_ports = find_open_ports(options)
     
     # Launch attacks based on the open ports.
@@ -109,7 +109,7 @@ def find_open_ports(options):
     device_count = len(nm.all_hosts())
     for host in nm.all_hosts():
         # Printing a progress report for scanned devices.
-        print(f"scanning device {host} | {i}/{device_count}...        \r", end ="")
+        print(f"scanning for open ports {host} | {i}/{device_count}...        \r", end ="")
         i += 1
 
         # Scanning each device for open ports.
@@ -118,9 +118,9 @@ def find_open_ports(options):
             for port in nmdevice[host]['tcp'].keys():
                 if nmdevice[host]['tcp'][port]['state'] == 'open':
                     if(host in open_ports):
-                        open_ports[host].append({"port":port, "service":nmdevice[host]['tcp'][port]['name'], "isVulnerable":False})
+                        open_ports[host].append({"port":port, "service":nmdevice[host]['tcp'][port]['name'], "result":{"isVulnerable":False, "username":None, "password":None, "url":None}})
                     else:
-                        open_ports[host] = [{"port":port, "service":nmdevice[host]['tcp'][port]['name'], "isVulnerable":False}]
+                        open_ports[host] = [{"port":port, "service":nmdevice[host]['tcp'][port]['name'], "result":{"isVulnerable":False, "username":None, "password":None, "url":None}}]
         except:
             continue
     
@@ -135,7 +135,10 @@ def launch_attacks(options, open_ports):
 
     # Launching attacks based on service
     for device in open_ports:
-        for port in open_ports[device]:
+        for port in open_ports[device]:    
+
+            # Printing a progress report for scanned devices.
+            print(f"checking {device}:{port['port']} [{port['service']}]...               \r", end ="")
 
             # The hydra based attacks.
             hydra_result = None
@@ -149,34 +152,40 @@ def launch_attacks(options, open_ports):
             # If hydra was used, analyze the output.
             if (hydra_result != None):
                 result = process_hydra_result(hydra_result)
-                port["isVulnerable"] = result["wasSuccess"]
+                port["result"] = result
 
 
 def process_hydra_result(result):
     '''
     Given the output from a Hydra process run, will determine success or failure of the attack.
 
-    The result is returned as a dictionary {wasSuccess, usernmame, password}
+    The result is returned as a dictionary {isVulnerable, username, password, url}
     '''
 
     # If a valid username/password was not found, return.
     if(result.returncode != 0):
-        return {"wasSuccess":False, "usernmame":None, "password":None}    
+        return {"isVulnerable":False, "username":None, "password":None, "url":None}    
 
     # If a valid username was found, save it.
     login = None
-    matchLogin = re.search('login:(.*)', result.stdout)
+    matchLogin = re.search('login: (.*)', result.stdout)
     if(matchLogin):
         login = matchLogin.group(1).split("password: ")[0]
     
     # If a valid password was found, save it.
     password = None
-    matchPass = re.search('password:(.*)', result.stdout)
+    matchPass = re.search('password: (.*)', result.stdout)
     if(matchPass):
         password = matchPass.group(1)
 
+    # If a valid url was found, save it.
+    url = None
+    matchUrl = re.search('rtsp://(.*)', result.stdout)
+    if(matchUrl):
+        url = "rtsp://" + matchUrl.group(1)
+
     # Return the username/password.
-    return {"wasSuccess":True, "usernmame":login, "password":password}
+    return {"isVulnerable":True, "username":login, "password":password, "url":url}
 
 def print_report(open_ports):
     '''
@@ -185,17 +194,40 @@ def print_report(open_ports):
 
     for device in open_ports:
         # Print a new-line that clears the progress report if needed.
-        print(" "*60)
+        print(" "*70)
 
         # Print the address of the device.
         print(device)
 
         # Print the column header.
-        print("PORT      SERVICE        ATTACK")
+        print("PORT      SERVICE        ATTACK      USER/PASS/URL")
 
         # Print the findings.
         for port in open_ports[device]:
-            print(str(port["port"]).ljust(10) + port["service"].ljust(15) + ("VUNERABLE" if port["isVulnerable"] else "-").ljust(11))
+
+            # Building the username/password/url string.
+            userPassUrlString = ""
+            if(port["result"]["isVulnerable"]):
+                if(port["result"]["username"]):
+                    userPassUrlString = userPassUrlString + port["result"]["username"]
+                if(port["result"]["password"]):
+                    userPassUrlString = userPassUrlString + " | " + port["result"]["password"]
+                if(port["result"]["url"]):
+                    userPassUrlString = userPassUrlString + " | " + port["result"]["url"]
+                
+                # No security prints as [Unsecured]
+                if(userPassUrlString == ""):
+                    userPassUrlString = "[Unsecured]"
+            else:
+                userPassUrlString = "-"
+
+
+            print(
+                str(port["port"]).ljust(10) + 
+                port["service"].ljust(15) + 
+                ("VULNERABLE" if port["result"]["isVulnerable"] else "-").ljust(12) + 
+                userPassUrlString
+            )
     
     # A final newline for spacing.
     print("")
