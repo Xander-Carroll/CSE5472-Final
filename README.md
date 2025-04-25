@@ -1,4 +1,7 @@
-# DROP_TABLE_owlet
+# DROP_TABLE_OWLET
+
+## Description
+This is a project for the CSE 5472 (Information Security Projects) class. It is a suite of scripts that will run several network based attacks meant to target IoT devices. The scripts will then produce an 'nmap like' output with the results.
 
 ## Dependencies
 This script requires the following python modules: 
